@@ -40,7 +40,7 @@ const directoryListingTemplateText = `
 <table>
 	<thead>
 		<th></th>
-		<th colspan=2 class=number>Size (bytes)</th>
+		<th colspan=3 class=number>Size (bytes)</th>
 	</thead>
 	<tbody>
 	{{- if .Files }}
