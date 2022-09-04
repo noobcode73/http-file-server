@@ -83,32 +83,18 @@ $ ./http-file-server -port 8443 -ssl-cert server.crt -ssl-key server.key
 
 ## Get it
 
-### Using `go get`
+### Using `go install`
 
 ```sh
-go get -u github.com/sgreben/http-file-server
+go install github.com/muller2002/http-file-server@latest
 ```
 
-### Pre-built binary
-
-Or [download a binary](https://github.com/sgreben/http-file-server/releases/latest) from the releases page, or from the shell:
-
-```sh
-# Linux
-curl -L https://github.com/sgreben/http-file-server/releases/download/1.6.1/http-file-server_1.6.1_linux_x86_64.tar.gz | tar xz
-
-# OS X
-curl -L https://github.com/sgreben/http-file-server/releases/download/1.6.1/http-file-server_1.6.1_osx_x86_64.tar.gz | tar xz
-
-# Windows
-curl -LO https://github.com/sgreben/http-file-server/releases/download/1.6.1/http-file-server_1.6.1_windows_x86_64.zip
-unzip http-file-server_1.6.1_windows_x86_64.zip
-```
+After this the executable is installed in go's normal directorys (see ```go help install``` for more information)
 
 ## Use it
 
 ```text
-http-file-server [OPTIONS] [[ROUTE=]PATH] [[ROUTE=]PATH...]
+GOPATH/http-file-server [OPTIONS] [[ROUTE=]PATH] [[ROUTE=]PATH...]
 ```
 
 ```text
