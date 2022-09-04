@@ -46,6 +46,7 @@ const directoryListingTemplateText = `
 	{{- if .Files }}
 	<tr><td colspan=3><a href="{{ .TarGzURL }}">.tar.gz of all files</a></td></tr>
 	<tr><td colspan=3><a href="{{ .ZipURL }}">.zip of all files</a></td></tr>
+	<tr><td colspan=3><a href="../">..</a></td></tr>
 	{{- end }}
 	{{- range .Files }}
 	<tr>
