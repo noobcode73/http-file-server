@@ -40,13 +40,13 @@ const directoryListingTemplateText = `
 <table>
 	<thead>
 		<th></th>
-		<th colspan=3 class=number>Size (bytes)</th>
+		<th colspan=4 class=number>Size (bytes)</th>
 	</thead>
 	<tbody>
 	{{- if .Files }}
-	<tr><td colspan=2><a href="{{ .TarGzURL }}">.tar.gz of all files</a></td></tr>
-	<tr><td colspan=2><a href="{{ .ZipURL }}">.zip of all files</a></td></tr>
-	<tr><td colspan=2><a href="../">..</a></td></tr>
+	<tr><td colspan=4><a href="{{ .TarGzURL }}">.tar.gz of all files</a></td></tr>
+	<tr><td colspan=4><a href="{{ .ZipURL }}">.zip of all files</a></td></tr>
+	<tr><td colspan=4><a href="../">..</a></td></tr>
 	{{- end }}
 	{{- range .Files }}
 	<tr>
@@ -56,7 +56,7 @@ const directoryListingTemplateText = `
 		<td class=number>{{.Size.String }}</td>
 		<td class=number>({{ .Size | printf "%d" }})</td>
 		{{ else }}
-		<td colspan=3 class=text><a href="{{ .URL.String }}">{{ .Name }}</td>
+		<td colspan=4 class=text><a href="{{ .URL.String }}">{{ .Name }}</td>
 		{{ end }}
 	</tr>
 	{{- end }}
