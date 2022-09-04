@@ -63,7 +63,7 @@ $ http-file-server /abc/def/ghi=/tmp
 ### Uploading files using cURL
 
 ```sh
-$ ./http-file-server -uploads /=/path/to/serve
+$ http-file-server -uploads /=/path/to/serve
 2020/03/10 22:00:54 serving local path "/path/to/serve" on "/"
 2020/03/10 22:00:54 http-file-server listening on ":8080"
 ```
