@@ -14,6 +14,11 @@
   - [Setting the HTTP port via environment variables](#setting-the-http-port-via-environment-variables)
   - [Uploading files using cURL](#uploading-files-using-curl)
   - [HTTPS (SSL/TLS)](#https-ssltls)
+  - [Custom Templates](#templates)
+  - [Create new folder](#new-folder)
+  - [Disable show hidden files or dirs](#hidden)
+  - [Auth](#auth)
+  - [Auth single route](#auth-route)
 - [Get it](#get-it)
   - [Using `go get`](#using-go-get)
   - [Pre-built binary](#pre-built-binary)
@@ -81,12 +86,68 @@ $ ./http-file-server -port 8443 -ssl-cert server.crt -ssl-key server.key
 2020/03/10 22:00:54 http-file-server (HTTPS) listening on ":8443"
 ```
 
+### Custom templates
+
+![screenshot](doc/custom%20template.jpg)
+
+Create a folder and add base.html
+
+Create a subfolder 'errors' and add html files named 'status code': 401.html, 404.html, 500.html...
+
+example templates in /templates/
+
+```sh
+$ ./http-file-server -t ./templates
+2022/12/02 00:27:24 Added custom templates: ./templates
+```
+
+### Create new folder
+Set `-c` or `--creates`
+The new directory will be created in the current directory with permissions `665`
+
+Note: html method `PUT` is used
+
+```sh
+$ ./http-file-server -c ./
+```
+
+### Disable show hidden files or dirs
+You can disable the display of hidden files or directories using the `-nh` or `--nohidden` argument
+
+Note. Does not affect downloading a directory as an archive.
+```sh
+$ ./http-file-server -nh ./                                                                   
+```
+
+### Auth
+You can set Basic authorization for all routes using `--user` and `--passwd`
+```sh
+$ ./http-file-server --user admin --passwd 123456 ./                                         
+```
+
+### Auth single route
+You can set Basic authorization for a single route using the format `user:passwd@/locatin=./local_path`
+```sh
+$ ./http-file-server admin:1234@/home=/tmp/home
+```
+
+Nore: The `--user` and `--passwd` arguments will be ignored.
+
+For example:
+```sh
+$ ./http-file-server --user user1 --passwd 112233 admin:1234@/main=/tmp/home /home=/test2 /shara=/srv/shara
+```
+Here, for all routes, except for `/main`, global authorization will apply (`--user` (`user1`) `--passwd` (`112233`))
+
+
+
+
 ## Get it
 
 ### Using `go install`
 
 ```sh
-go install github.com/muller2002/http-file-server@latest
+go install github.com/noobcode73/http-file-server@latest
 ```
 
 After this the executable is installed in go's normal directorys (see ```go help install``` for more information)
@@ -99,26 +160,46 @@ GOPATH/http-file-server [OPTIONS] [[ROUTE=]PATH] [[ROUTE=]PATH...]
 
 ```text
 Usage of http-file-server:
-  -a string
-    	(alias for -addr) (default ":8080")
+   -a string
+        (alias for -addr) (default ":8080")
   -addr string
-    	address to listen on (environment variable "ADDR") (default ":8080")
+        address to listen on (environment variable "ADDR") (default ":8080")
+  -c    (alias for -creates)
+  -creates
+        allow creates folder (environment variable "CREATES")
+  -d    (alias for -deletes)
+  -deletes
+        allow deletes (environment variable "DELETES")
+  -nh
+        (alias for -nohidden)
+  -nohidden
+    no allow hidden folders or files (environment variable "NO_HIDDEN")
   -p int
-    	(alias for -port)
+     (alias for -port)
+  -passwd string
+    global password for all routes (without auth) (environment variable "PASSWD").
   -port int
-    	port to listen on (overrides -addr port) (environment variable "PORT")
-  -q	(alias for -quiet)
+     port to listen on (overrides -addr port) (environment variable "PORT")
+  -q (alias for -quiet)
   -quiet
-    	disable all log output (environment variable "QUIET")
+     disable all log output (environment variable "QUIET")
   -r value
-    	(alias for -route)
+     (alias for -route)
   -route value
-    	a route definition ROUTE=PATH (ROUTE defaults to basename of PATH if omitted)
+      a route definition ROUTE=PATH (ROUTE defaults to basename of PATH if omitted)
   -ssl-cert string
-    	path to SSL server certificate (environment variable "SSL_CERTIFICATE")
+      path to SSL server certificate (environment variable "SSL_CERTIFICATE")
   -ssl-key string
-    	path to SSL private key (environment variable "SSL_KEY")
-  -u	(alias for -uploads)
+     path to SSL private key (environment variable "SSL_KEY")
+  -t string
+     (alias for -template)
+  -templates string
+        path to custom Templates folder html.
+                base template = base.html, errors template = "status_code".html (401.html, 404.html, etc.).
+                (environment variable "TEMPLATES")
+  -u    (alias for -uploads)
   -uploads
-    	allow uploads (environment variable "UPLOADS")
+        allow uploads (environment variable "UPLOADS")
+  -user string
+        global user name for all routes (without auth) (environment variable "USER").
 ```

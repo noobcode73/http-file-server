@@ -10,30 +10,41 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 const (
 	addrEnvVarName           = "ADDR"
 	allowUploadsEnvVarName   = "UPLOADS"
 	allowDeletesEnvVarName   = "DELETES"
+	allowCreatesEnvVarName   = "CREATES"
+	noAllowHiddenEnvVarName  = "NO_HIDDEN"
 	defaultAddr              = ":8080"
 	portEnvVarName           = "PORT"
 	quietEnvVarName          = "QUIET"
 	rootRoute                = "/"
+	customTemplateEnvVarName = "TEMPLATES"
 	sslCertificateEnvVarName = "SSL_CERTIFICATE"
 	sslKeyEnvVarName         = "SSL_KEY"
+	userEnvVarName           = "USER"
+	passwdEnvName            = "PASSWD"
 )
 
 var (
-	addrFlag         = os.Getenv(addrEnvVarName)
-	allowUploadsFlag = os.Getenv(allowUploadsEnvVarName) == "true"
-	allowDeletesFlag = os.Getenv(allowDeletesEnvVarName) == "true"
-	portFlag64, _    = strconv.ParseInt(os.Getenv(portEnvVarName), 10, 64)
-	portFlag         = int(portFlag64)
-	quietFlag        = os.Getenv(quietEnvVarName) == "true"
-	routesFlag       routes
-	sslCertificate   = os.Getenv(sslCertificateEnvVarName)
-	sslKey           = os.Getenv(sslKeyEnvVarName)
+	addrFlag           = os.Getenv(addrEnvVarName)
+	allowUploadsFlag   = os.Getenv(allowUploadsEnvVarName) == "true"
+	allowDeletesFlag   = os.Getenv(allowDeletesEnvVarName) == "true"
+	allowCreatesFlag   = os.Getenv(allowCreatesEnvVarName) == "true"
+	noAllowHiddenFlag  = os.Getenv(noAllowHiddenEnvVarName) == "true"
+	customTemplateFlag = os.Getenv(customTemplateEnvVarName)
+	portFlag64, _      = strconv.ParseInt(os.Getenv(portEnvVarName), 10, 64)
+	portFlag           = int(portFlag64)
+	quietFlag          = os.Getenv(quietEnvVarName) == "true"
+	routesFlag         routes
+	sslCertificate     = os.Getenv(sslCertificateEnvVarName)
+	sslKey             = os.Getenv(sslKeyEnvVarName)
+	userFlag           = os.Getenv(userEnvVarName)
+	passwdFlag         = os.Getenv(passwdEnvName)
 )
 
 func init() {
@@ -52,10 +63,18 @@ func init() {
 	flag.BoolVar(&allowUploadsFlag, "u", allowUploadsFlag, "(alias for -uploads)")
 	flag.BoolVar(&allowDeletesFlag, "deletes", allowDeletesFlag, fmt.Sprintf("allow deletes (environment variable %q)", allowDeletesEnvVarName))
 	flag.BoolVar(&allowDeletesFlag, "d", allowDeletesFlag, "(alias for -deletes)")
+	flag.BoolVar(&allowCreatesFlag, "creates", allowCreatesFlag, fmt.Sprintf("allow creates folder (environment variable %q)", allowCreatesEnvVarName))
+	flag.BoolVar(&allowCreatesFlag, "c", allowCreatesFlag, "(alias for -creates)")
+	flag.BoolVar(&noAllowHiddenFlag, "nohidden", allowCreatesFlag, fmt.Sprintf("no allow hidden folders or files (environment variable %q)", noAllowHiddenEnvVarName))
+	flag.BoolVar(&noAllowHiddenFlag, "nh", allowCreatesFlag, "(alias for -nohidden)")
 	flag.Var(&routesFlag, "route", routesFlag.help())
 	flag.Var(&routesFlag, "r", "(alias for -route)")
 	flag.StringVar(&sslCertificate, "ssl-cert", sslCertificate, fmt.Sprintf("path to SSL server certificate (environment variable %q)", sslCertificateEnvVarName))
 	flag.StringVar(&sslKey, "ssl-key", sslKey, fmt.Sprintf("path to SSL private key (environment variable %q)", sslKeyEnvVarName))
+	flag.StringVar(&customTemplateFlag, "templates", customTemplateFlag, fmt.Sprintf("path to custom Templates folder html.\n\tbase template = base.html, errors template = \"status_code\".html (401.html, 404.html, etc.).\n\t(environment variable %q)", customTemplateEnvVarName))
+	flag.StringVar(&customTemplateFlag, "t", customTemplateFlag, "(alias for -template)")
+	flag.StringVar(&userFlag, "user", userFlag, fmt.Sprintf("global user name for all routes (without auth) (environment variable %q).", userEnvVarName))
+	flag.StringVar(&passwdFlag, "passwd", passwdFlag, fmt.Sprintf("global password for all routes (without auth) (environment variable %q).", passwdEnvName))
 	flag.Parse()
 	if quietFlag {
 		log.SetOutput(ioutil.Discard)
@@ -81,9 +100,19 @@ func main() {
 }
 
 func server(addr string, routes routes) error {
+	// check exist folder templates
+	if stat, err := os.Stat(customTemplateFlag); os.IsNotExist(err) || stat.IsDir() == false {
+		log.Printf("Wrong path to folder with custom templates: %s\n", customTemplateFlag)
+		customTemplateFlag = ""
+	} else {
+		if string(customTemplateFlag[len(customTemplateFlag)-1]) == osPathSeparator {
+			customTemplateFlag = strings.TrimSuffix(customTemplateFlag, osPathSeparator)
+		}
+		log.Printf("Added custom templates: %s", customTemplateFlag)
+	}
+
 	mux := http.DefaultServeMux
 	handlers := make(map[string]http.Handler)
-	paths := make(map[string]string)
 
 	if len(routes.Values) == 0 {
 		_ = routes.Set(".")
@@ -91,17 +120,26 @@ func server(addr string, routes routes) error {
 
 	for _, route := range routes.Values {
 		handlers[route.Route] = &fileHandler{
-			route:       route.Route,
-			path:        route.Path,
-			allowUpload: allowUploadsFlag,
-			allowDelete: allowDeletesFlag,
+			route:          route.Route,
+			path:           route.Path,
+			allowUpload:    allowUploadsFlag,
+			allowDelete:    allowDeletesFlag,
+			allowCreate:    allowCreatesFlag,
+			customTemplate: customTemplateFlag,
+			noAllowHidden:  noAllowHiddenFlag,
 		}
-		paths[route.Route] = route.Path
-	}
 
-	for route, path := range paths {
-		mux.Handle(route, handlers[route])
-		log.Printf("serving local path %q on %q", path, route)
+		if userFlag == "" && passwdFlag == "" && route.User == "" && route.Passwd == "" {
+			mux.Handle(route.Route, handlers[route.Route])
+			log.Printf("serving local path %q on %q", route.Path, route.Route)
+		} else {
+			_user, _passwd := userFlag, passwdFlag
+			if route.User != "" && route.Passwd != "" {
+				_user, _passwd = route.User, route.Passwd
+			}
+			mux.HandleFunc(route.Route, BasicAuth(handlers[route.Route].ServeHTTP, _user, _passwd, "Please enter your username and password for this site"))
+			log.Printf("auth with serving local path %q on %q", route.Path, route.Route)
+		}
 	}
 
 	_, rootRouteTaken := handlers[rootRoute]
