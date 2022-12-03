@@ -1,6 +1,6 @@
 # http-file-server
 
-`http-file-server` is a dependency-free HTTP file server. Beyond directory listings and file downloads, it lets you download a whole directory as as `.zip` or `.tar.gz` (generated on-the-fly).
+`http-file-server` is a dependency-free HTTP file server. Beyond directory listings and file downloads, it lets you download a whole directory as `.zip` or `.tar.gz` (generated on-the-fly).
 
 ![screenshot](doc/screenshot.png)
 
@@ -19,6 +19,7 @@
   - [Disable show hidden files or dirs](#hidden)
   - [Auth](#auth)
   - [Auth single route](#auth-route)
+  - [Download selected](#download-selected)
 - [Get it](#get-it)
   - [Using `go get`](#using-go-get)
   - [Pre-built binary](#pre-built-binary)
@@ -139,6 +140,22 @@ $ ./http-file-server --user user1 --passwd 112233 admin:1234@/main=/tmp/home /ho
 ```
 Here, for all routes, except for `/main`, global authorization will apply (`--user` (`user1`) `--passwd` (`112233`))
 
+
+### Download selected
+
+You can download selected files or directory in `zip` or `tar.gz` archive
+
+- The `POST` HTML method is used with a `zip` or `tar.gz` URL request argument
+- Payload `items` value `folder or directory name` separated by `;`
+
+
+    Url: /home/?zip
+    Payload: items=main.go;help;text1.txt;folder01
+    Method: Post
+    Headers: "Content-Type": "application/x-www-form-urlencoded"
+
+
+![screenshot](doc/download selected.jpg)
 
 
 

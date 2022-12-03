@@ -47,16 +47,26 @@ func (f *FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_ = f.serveStatus(w, r, http.StatusInternalServerError)
 	case !f.allowDelete && r.Method == http.MethodDelete:
 		_ = f.serveStatus(w, r, http.StatusForbidden)
-	case !f.allowUpload && r.Method == http.MethodPost:
+	case !f.allowUpload && r.Method == http.MethodPost && len(r.URL.Query().Get("")) != 0:
 		_ = f.serveStatus(w, r, http.StatusForbidden)
-	case !f.allowCreate && r.Method == http.MethodPost:
+	case !f.allowCreate && r.Method == http.MethodPost && r.URL.Query().Has(newFolderKey):
 		_ = f.serveStatus(w, r, http.StatusForbidden)
-	case r.URL.Query().Has(zipKey):
+	case r.URL.Query().Has(zipKey) && r.Method == http.MethodGet:
 		err := f.serveZip(w, r, osPath)
 		if err != nil {
 			_ = f.serveStatus(w, r, http.StatusInternalServerError)
 		}
-	case r.URL.Query().Has(tarGzKey):
+	case r.URL.Query().Has(tarGzKey) && r.Method == http.MethodGet:
+		err := f.serveTarGz(w, r, osPath)
+		if err != nil {
+			_ = f.serveStatus(w, r, http.StatusInternalServerError)
+		}
+	case r.URL.Query().Has(zipKey) && r.Method == http.MethodPost:
+		err := f.serveZip(w, r, osPath)
+		if err != nil {
+			_ = f.serveStatus(w, r, http.StatusInternalServerError)
+		}
+	case r.URL.Query().Has(tarGzKey) && r.Method == http.MethodPost:
 		err := f.serveTarGz(w, r, osPath)
 		if err != nil {
 			_ = f.serveStatus(w, r, http.StatusInternalServerError)

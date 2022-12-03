@@ -39,6 +39,18 @@ func isHidden(p string) bool {
 	return h
 }
 
+func getItems(r *http.Request) []string {
+	var items []string
+	if err := r.ParseForm(); err != nil {
+		return items
+	}
+	values := r.FormValue("items")
+	if len(values) > 1 && strings.Contains(values, ";") {
+		items = strings.Split(values, ";")
+	}
+	return items
+}
+
 type fileSizeBytes int64
 
 func (f fileSizeBytes) String() string {
@@ -100,14 +112,16 @@ func (f *FileHandler) serveTarGz(w http.ResponseWriter, r *http.Request, path st
 	w.Header().Set("Content-Type", tarGzContentType)
 	name := filepath.Base(path) + ".tar.gz"
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename=%q`, name))
-	return utils.TarGz(w, path)
+	items := getItems(r)
+	return utils.TarGz(w, path, items)
 }
 
 func (f *FileHandler) serveZip(w http.ResponseWriter, r *http.Request, osPath string) error {
 	w.Header().Set("Content-Type", zipContentType)
 	name := filepath.Base(osPath) + ".zip"
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename=%q`, name))
-	return utils.Zip(w, osPath)
+	items := getItems(r)
+	return utils.Zip(w, osPath, items)
 }
 
 func (f *FileHandler) serveDir(w http.ResponseWriter, r *http.Request, osPath string) error {

@@ -72,157 +72,168 @@
     </div>
 
     {{ if or .Files .AllowUpload }}
-        <div class="row pt-4">
-            {{ if .AllowCreate }}
-                <div class="col">
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" placeholder="Name new folder"
-                               aria-label="Name new folder"
-                               aria-describedby="btn_newFolder" id="newfolder">
-                        <button class="btn btn-outline-secondary" type="button" id="btn_newFolder" onclick="create()">
-                            <i class="bi bi-folder-plus" data-toggle="tooltip" title="Create new folder"></i>
-                        </button>
-                    </div>
-                </div>
-            {{end}}
-            <div class="col">
-                {{- if .Files }}
-                    <div class="btn-toolbar mb-1">
-                        <div class="btn-group me-1" role="group">
-                            <div class="input-group-text" id="btnGroupAddon">Download this folder</div>
-                            <a class="btn btn-outline-success" aria-describedby="btnGroupAddon" href="{{ .TarGzURL }}">
-                                <i class="bi bi-archive-fill" data-toggle="tooltip" title=".tar.gz"></i>
-                            </a>
-                            <a class="btn btn-outline-success" aria-describedby="btnGroupAddon" href="{{ .ZipURL }}">
-                                <i class="bi bi-file-zip-fill" data-toggle="tooltip" title=".zip"></i>
-                            </a>
-                        </div>
-                    </div>
-                {{- end }}
-            </div>
-            <div class="col-sm-1"></div>
-            <div class="col">
-                {{ if .AllowUpload }}
-                    <form class="row m-0" method="post" enctype="multipart/form-data">
-                        <div class="input-group mb-3">
-                            <input class="form-control form-control" id="formFileSm" required name="file" type="file"
-                                   multiple aria-describedby="button-upload">
-                            <button type="submit" class="btn btn-outline-success" value="Upload" id="button-upload">
-                                <i class="bi bi-cloud-plus" data-toggle="tooltip" title="Upload"></i>
-                            </button>
-                        </div>
-                    </form>
-                {{- end }}
+    <div class="row pt-4">
+        {{ if .AllowCreate }}
+        <div class="col">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" placeholder="Name new folder"
+                       aria-label="Name new folder"
+                       aria-describedby="btn_newFolder" id="newfolder">
+                <button class="btn btn-outline-secondary" type="button" id="btn_newFolder" onclick="create()">
+                    <i class="bi bi-folder-plus" data-toggle="tooltip" title="Create new folder"></i>
+                </button>
             </div>
         </div>
+        {{end}}
+        <div class="col">
+            {{- if .Files }}
+            <div class="btn-toolbar mb-1">
+                <div class="btn-group me-1" role="group">
+                    <div class="input-group-text" id="btnGroupAddon">Download this folder</div>
+                    <button class="btn btn-outline-success" aria-describedby="btnGroupAddon"
+                            onclick="download('tar.gz')">
+                        <i class="bi bi-archive-fill" data-toggle="tooltip" title=".tar.gz"></i>
+                    </button>
+                    <button class="btn btn-outline-success" aria-describedby="btnGroupAddon" onclick="download('zip')">
+                        <i class="bi bi-file-zip-fill" data-toggle="tooltip" title=".zip"></i>
+                    </button>
+                </div>
+            </div>
+            {{- end }}
+        </div>
+        <div class="col-sm-1"></div>
+        <div class="col">
+            {{ if .AllowUpload }}
+            <form class="row m-0" method="post" enctype="multipart/form-data">
+                <div class="input-group mb-3">
+                    <input class="form-control form-control" id="formFileSm" required name="file" type="file"
+                           multiple aria-describedby="button-upload">
+                    <button type="submit" class="btn btn-outline-success" value="Upload" id="button-upload">
+                        <i class="bi bi-cloud-plus" data-toggle="tooltip" title="Upload"></i>
+                    </button>
+                </div>
+            </form>
+            {{- end }}
+        </div>
+    </div>
 
-        <div class="row">
-            {{ if .NoAllowHidden }}
-                <span class="fs-5 text-danger text-center">Show hidden files disabled</span>
-            {{end}}
-            <div class="col-md-12" id="wrap">
-                <table class="table table-hover" id="fm" fixed-header>
-                    <thead class="sticky-top fs-4">
-                    <th>
+    <div class="row">
+        {{ if .NoAllowHidden }}
+        <span class="fs-5 text-danger text-center">Show hidden files disabled</span>
+        {{end}}
+        <div class="col-md-12" id="wrap">
+            <table class="table table-hover" id="fm" fixed-header>
+                <thead class="sticky-top fs-4">
+                <th>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" onclick="selects(this)">
                         <a href="../">
                             <i class="bi bi-arrow-90deg-up ms-0 up_icon" data-toggle="tooltip"
                                title="Up folder"></i>
                         </a>
-                    </th>
-                    <th scope="col" class="ps-3 col-md-6">
-                        <input class="finput" id="ninput" maxlength="35" placeholder="Name">
-                        <i class="bi bi-filter tool float-end"></i>
-                    </th>
-                    <th scope="col" class="text-center col-md-2">Modified <i class="bi bi-filter tool float-end"></i>
-                    </th>
-                    <th scope="col" class="text-center col-md-2">
-                        <input id="tinput" class="finput text-center" placeholder="Type" maxlength="15">
-                        <i class="bi bi-filter tool float-end"></i>
-                    </th>
-                    <th scope="col" class="text-center col-md-2">Size <i class="bi bi-filter tool float-end"></i>
-                    </th>
-                    <th scope="col" class="text-right col-md-1">Actions</th>
-                    </thead>
-                    <tbody class="align-middle">
+                    </div>
+                </th>
+                <th scope="col" class="ps-3 col-md-6">
+                    <input class="finput" id="ninput" maxlength="35" placeholder="Name">
+                    <i class="bi bi-filter tool float-end"></i>
+                </th>
+                <th scope="col" class="text-center col-md-2">Modified <i class="bi bi-filter tool float-end"></i>
+                </th>
+                <th scope="col" class="text-center col-md-2">
+                    <input id="tinput" class="finput text-center" placeholder="Type" maxlength="15">
+                    <i class="bi bi-filter tool float-end"></i>
+                </th>
+                <th scope="col" class="text-center col-md-2">Size <i class="bi bi-filter tool float-end"></i>
+                </th>
+                <th scope="col" class="text-right col-md-1">Actions</th>
+                </thead>
+                <tbody class="align-middle">
 
-                    {{- range $id, $item := .Files }}
-                        <tr>
-                            {{ if $item.IsDir }}
-                                <th>
-                                    <i class="bi bi-folder-fill p-0 position-relative" style="color: #e99907;"
-                                       data-toggle="tooltip"
-                                       title="is folder">
-                                        {{ if $item.IsHidden }}
-                                            <span class="position-absolute top-0 start-100 translate-middle p-0 badge "
-                                                  style="color: #cf0a0a" data-toggle="tooltip"
-                                                  title="hidden dir">
-                                                <i class="bi bi-eye-slash fs-6"></i>
-                                            </span>
-                                        {{ end }}
-                                    </i>
-                                </th>
-                                <td class="">
-                                    <a class="btn ps-0 ftd" href="{{ $item.URL.String }}">{{.Name }}</a>
-                                </td>
-                                <td class="text-center">{{ $item.Modified }}</td>
-                                <td class="text-center">
+                {{- range $id, $item := .Files }}
+                <tr>
+                    {{ if $item.IsDir }}
+                    <th>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="">
+                            <i class="bi bi-folder-fill p-0 position-relative" style="color: #e99907;"
+                               data-toggle="tooltip"
+                               title="is folder">
+                                {{ if $item.IsHidden }}
+                                <span class="position-absolute top-0 start-100 translate-middle p-0 badge "
+                                      style="color: #cf0a0a" data-toggle="tooltip"
+                                      title="hidden dir">
+                                                    <i class="bi bi-eye-slash fs-6"></i>
+                                                </span>
+                                {{ end }}
+                            </i>
+                        </div>
+                    </th>
+                    <td class="">
+                        <a class="btn ps-0 ftd" href="{{ $item.URL.String }}">{{.Name }}</a>
+                    </td>
+                    <td class="text-center">{{ $item.Modified }}</td>
+                    <td class="text-center">
                                     <span class="btn position-relative pb-0 ps-0"
                                           style="cursor: auto;">{{ $item.Type }}<span
-                                                class="position-absolute top-0 start-100 translate-middle p-1 badge bg-secondary"
-                                                data-toggle="tooltip" title="Files in folder">{{ $item.FCount }}</span>
+                                            class="position-absolute top-0 start-100 translate-middle p-1 badge bg-secondary"
+                                            data-toggle="tooltip" title="Files in folder">{{ $item.FCount }}</span>
                                     </span>
-                                </td>
-                                <td class="text-center">---</td>
-                                <td class="text-right">
-                                    <div class="btn-toolbar mb-1">
-                                        <div class="btn-group me-1" role="group">
-                                            <a class="btn p-0 pe-1" href="{{ $item.URL.String }}?tar.gz=true">
-                                                <i class="bi bi-archive-fill" style="color: #165fbb"
-                                                   data-toggle="tooltip" title=".tar.gz"></i>
-                                            </a>
-                                            <a class="btn p-0 ms-2" href="{{ $item.URL.String }}?zip=true">
-                                                <i class="bi bi-file-zip-fill" style="color: #198754"
-                                                   data-toggle="tooltip" title=".zip"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
-                            {{ else }}
-                                <th><i class="bi bi-file-binary-fill p-0 position-relative"
-                                       data-toggle="tooltip"
-                                       title="is file">
-                                        {{ if $item.IsHidden }}
-                                            <span class="position-absolute top-0 start-100 translate-middle p-0 badge"
-                                                  style="color: #cf0a0a" data-toggle="tooltip"
-                                                  title="hidden file">
-                                                <i class="bi bi-eye-slash fs-6"></i>
-                                            </span>
-                                        {{ end }}
-                                    </i>
-                                </th>
-                                <td class="ftd ps-2">{{ $item.Name }}</td>
-                                <td class="text-center">{{ $item.Modified }}</td>
-                                <td class="text-center">{{ $item.Type }}</td>
-                                <td class="text-center">{{ $item.Size  }}</td>
-                                <td class="text-right">
-                                    <a class="btn p-0 " href="{{ $item.URL.String }}" download>
-                                        <i class="bi bi-file-arrow-down-fill" style="color: #198754"
-                                           data-toggle="tooltip" title="Download"></i>
-                                    </a>
-                                    {{- if $.AllowDelete }}
-                                        <button class="btn p-0 ms-2" onclick="remove({{ $item.URL.String }})">
-                                            <i class="bi bi-trash3-fill" style="color:#cf0a0a;" data-toggle="tooltip"
-                                               title="Delete"></i>
-                                        </button>
-                                    {{- end }}
-                                </td>
-                            {{ end }}
-                        </tr>
-                    {{- end }}
-                    </tbody>
-                </table>
-            </div>
+                    </td>
+                    <td class="text-center">---</td>
+                    <td class="text-right">
+                        <div class="btn-toolbar mb-1">
+                            <div class="btn-group me-1" role="group">
+                                <a class="btn p-0 pe-1" href="{{ $item.URL.String }}?tar.gz=true">
+                                    <i class="bi bi-archive-fill" style="color: #165fbb"
+                                       data-toggle="tooltip" title=".tar.gz"></i>
+                                </a>
+                                <a class="btn p-0 ms-2" href="{{ $item.URL.String }}?zip=true">
+                                    <i class="bi bi-file-zip-fill" style="color: #198754"
+                                       data-toggle="tooltip" title=".zip"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    {{ else }}
+                    <th>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="">
+                            <i class="bi bi-file-binary-fill p-0 position-relative"
+                               data-toggle="tooltip"
+                               title="is file">
+                                {{ if $item.IsHidden }}
+                                <span class="position-absolute top-0 start-100 translate-middle p-0 badge"
+                                      style="color: #cf0a0a" data-toggle="tooltip"
+                                      title="hidden file">
+                                                    <i class="bi bi-eye-slash fs-6"></i>
+                                                </span>
+                                {{ end }}
+                            </i>
+                        </div>
+                    </th>
+                    <td class="ftd ps-2">{{ $item.Name }}</td>
+                    <td class="text-center">{{ $item.Modified }}</td>
+                    <td class="text-center">{{ $item.Type }}</td>
+                    <td class="text-center">{{ $item.Size }}</td>
+                    <td class="text-right">
+                        <a class="btn p-0 " href="{{ $item.URL.String }}" download>
+                            <i class="bi bi-file-arrow-down-fill" style="color: #198754"
+                               data-toggle="tooltip" title="Download"></i>
+                        </a>
+                        {{- if $.AllowDelete }}
+                        <button class="btn p-0 ms-2" onclick="remove({{ $item.URL.String }})">
+                            <i class="bi bi-trash3-fill" style="color:#cf0a0a;" data-toggle="tooltip"
+                               title="Delete"></i>
+                        </button>
+                        {{- end }}
+                    </td>
+                    {{ end }}
+                </tr>
+                {{- end }}
+                </tbody>
+            </table>
         </div>
+    </div>
     {{ end }}
 </div>
 <script type="text/javascript">
@@ -249,7 +260,7 @@
             nav.innerHTML = `<a class="nav-link disabled fs-4" href="#" tabindex="-1" aria-disabled="true">${nav_items[0]}</a>`
     }
 
-    if(document.getElementById("newfolder") !== null)
+    if (document.getElementById("newfolder") !== null)
         document.getElementById("newfolder").onkeyup = (e) => {
             if (e.key === "Enter") {
                 create()
@@ -348,6 +359,49 @@
                 }
             }
         }
+    }
+
+    function download(method) {
+        let out = ""
+        const url = window.location.href + "?" + method
+
+        document.querySelectorAll("tbody th input[type=checkbox]").forEach((item, i) => {
+            if (item.checked) {
+                let tr = document.querySelectorAll("tbody tr")[i]
+                if (tr.style.display !== "none") {
+                    let td = tr.children
+                    if (td[1].children[0])
+                        out += (td[1].children[0].innerHTML) + ";"
+                    else
+                        out += td[1].innerHTML + ";"
+                }
+            }
+        })
+        if (out.length > 1) {
+            const mapForm = document.createElement("form");
+            mapForm.target = "_self" || "_blank";
+            mapForm.id = "stmtForm";
+            mapForm.method = "POST";
+            mapForm.action = url;
+
+            const mapInput = document.createElement("input");
+            mapInput.type = "hidden";
+            mapInput.name = "items";
+            mapInput.value = out
+            mapForm.appendChild(mapInput);
+            document.body.appendChild(mapForm);
+
+            mapForm.submit();
+        } else
+            window.location.replace(url)
+    }
+
+    function selects(el) {
+        document.querySelectorAll("tbody th input[type=checkbox]").forEach((item, i) => {
+            let tr = document.querySelectorAll("tbody tr")[i]
+            if (tr.style.display !== "none")
+                item.checked = el.checked
+        })
     }
 
     function remove(url) {
