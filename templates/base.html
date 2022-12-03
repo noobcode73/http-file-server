@@ -1,0 +1,385 @@
+<html lang="">
+<head>
+    <title>{{ .Title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+            integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+            integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+            crossorigin="anonymous"></script>
+    <style>
+        i {
+            font-size: 1.5em;
+        }
+
+        body {
+            padding-top: 10px;
+            background-color: #565454;
+        }
+
+        .container {
+            background-color: white;
+        }
+
+        th i.tool {
+            padding-top: 0.5rem !important;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        thead {
+            background-color: white;
+        }
+
+        #wrap {
+            overflow-y: auto;
+            height: 82vh;
+        }
+
+        .finput {
+            width: 85%;
+            border: none;
+            outline: none;
+            padding: 0 !important;
+            text-decoration: underline;
+            user-select: none !important;
+        }
+
+        .up_icon {
+            font-size: 1em;
+        }
+
+        .ftd {
+            display: table-cell;
+            vertical-align: inherit;
+            font-weight: bold;
+        }
+
+        .finput::placeholder { /* Most modern browsers support this now. */
+            color: #212529;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <nav class="nav text-break ps-2" id="nav" style="font-size: xx-large;"></nav>
+    </div>
+
+    {{ if or .Files .AllowUpload }}
+        <div class="row pt-4">
+            {{ if .AllowCreate }}
+                <div class="col">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Name new folder"
+                               aria-label="Name new folder"
+                               aria-describedby="btn_newFolder" id="newfolder">
+                        <button class="btn btn-outline-secondary" type="button" id="btn_newFolder" onclick="create()">
+                            <i class="bi bi-folder-plus" data-toggle="tooltip" title="Create new folder"></i>
+                        </button>
+                    </div>
+                </div>
+            {{end}}
+            <div class="col">
+                {{- if .Files }}
+                    <div class="btn-toolbar mb-1">
+                        <div class="btn-group me-1" role="group">
+                            <div class="input-group-text" id="btnGroupAddon">Download this folder</div>
+                            <a class="btn btn-outline-success" aria-describedby="btnGroupAddon" href="{{ .TarGzURL }}">
+                                <i class="bi bi-archive-fill" data-toggle="tooltip" title=".tar.gz"></i>
+                            </a>
+                            <a class="btn btn-outline-success" aria-describedby="btnGroupAddon" href="{{ .ZipURL }}">
+                                <i class="bi bi-file-zip-fill" data-toggle="tooltip" title=".zip"></i>
+                            </a>
+                        </div>
+                    </div>
+                {{- end }}
+            </div>
+            <div class="col-sm-1"></div>
+            <div class="col">
+                {{ if .AllowUpload }}
+                    <form class="row m-0" method="post" enctype="multipart/form-data">
+                        <div class="input-group mb-3">
+                            <input class="form-control form-control" id="formFileSm" required name="file" type="file"
+                                   aria-describedby="button-upload">
+                            <button type="submit" class="btn btn-outline-success" value="Upload" id="button-upload">
+                                <i class="bi bi-cloud-plus" data-toggle="tooltip" title="Upload"></i>
+                            </button>
+                        </div>
+                    </form>
+                {{- end }}
+            </div>
+        </div>
+
+        <div class="row">
+            {{ if .NoAllowHidden }}
+                <span class="fs-5 text-danger text-center">Show hidden files disabled</span>
+            {{end}}
+            <div class="col-md-12" id="wrap">
+                <table class="table table-hover" id="fm" fixed-header>
+                    <thead class="sticky-top fs-4">
+                    <th>
+                        <a href="../">
+                            <i class="bi bi-arrow-90deg-up ms-0 up_icon" data-toggle="tooltip"
+                               title="Up folder"></i>
+                        </a>
+                    </th>
+                    <th scope="col" class="ps-3 col-md-6">
+                        <input class="finput" id="ninput" maxlength="35" placeholder="Name">
+                        <i class="bi bi-filter tool float-end"></i>
+                    </th>
+                    <th scope="col" class="text-center col-md-2">Modified <i class="bi bi-filter tool float-end"></i>
+                    </th>
+                    <th scope="col" class="text-center col-md-2">
+                        <input id="tinput" class="finput text-center" placeholder="Type" maxlength="15">
+                        <i class="bi bi-filter tool float-end"></i>
+                    </th>
+                    <th scope="col" class="text-center col-md-2">Size <i class="bi bi-filter tool float-end"></i>
+                    </th>
+                    <th scope="col" class="text-right col-md-1">Actions</th>
+                    </thead>
+                    <tbody class="align-middle">
+
+                    {{- range $id, $item := .Files }}
+                        <tr>
+                            {{ if $item.IsDir }}
+                                <th>
+                                    <i class="bi bi-folder-fill p-0 position-relative" style="color: #e99907;"
+                                       data-toggle="tooltip"
+                                       title="is folder">
+                                        {{ if $item.IsHidden }}
+                                            <span class="position-absolute top-0 start-100 translate-middle p-0 badge "
+                                                  style="color: #cf0a0a" data-toggle="tooltip"
+                                                  title="hidden dir">
+                                                <i class="bi bi-eye-slash fs-6"></i>
+                                            </span>
+                                        {{ end }}
+                                    </i>
+                                </th>
+                                <td class="">
+                                    <a class="btn ps-0 ftd" href="{{ $item.URL.String }}">{{.Name }}</a>
+                                </td>
+                                <td class="text-center">{{ $item.Modified }}</td>
+                                <td class="text-center">
+                                    <span class="btn position-relative pb-0 ps-0"
+                                          style="cursor: auto;">{{ $item.Type }}<span
+                                                class="position-absolute top-0 start-100 translate-middle p-1 badge bg-secondary"
+                                                data-toggle="tooltip" title="Files in folder">{{ $item.FCount }}</span>
+                                    </span>
+                                </td>
+                                <td class="text-center">---</td>
+                                <td class="text-right">
+                                    <div class="btn-toolbar mb-1">
+                                        <div class="btn-group me-1" role="group">
+                                            <a class="btn p-0 pe-1" href="{{ $item.URL.String }}?tar.gz=true">
+                                                <i class="bi bi-archive-fill" style="color: #165fbb"
+                                                   data-toggle="tooltip" title=".tar.gz"></i>
+                                            </a>
+                                            <a class="btn p-0 ms-2" href="{{ $item.URL.String }}?zip=true">
+                                                <i class="bi bi-file-zip-fill" style="color: #198754"
+                                                   data-toggle="tooltip" title=".zip"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            {{ else }}
+                                <th><i class="bi bi-file-binary-fill p-0 position-relative"
+                                       data-toggle="tooltip"
+                                       title="is file">
+                                        {{ if $item.IsHidden }}
+                                            <span class="position-absolute top-0 start-100 translate-middle p-0 badge"
+                                                  style="color: #cf0a0a" data-toggle="tooltip"
+                                                  title="hidden file">
+                                                <i class="bi bi-eye-slash fs-6"></i>
+                                            </span>
+                                        {{ end }}
+                                    </i>
+                                </th>
+                                <td class="ftd ps-2">{{ $item.Name }}</td>
+                                <td class="text-center">{{ $item.Modified }}</td>
+                                <td class="text-center">{{ $item.Type }}</td>
+                                <td class="text-center">{{ $item.Size  }}</td>
+                                <td class="text-right">
+                                    <a class="btn p-0 " href="{{ $item.URL.String }}" download>
+                                        <i class="bi bi-file-arrow-down-fill" style="color: #198754"
+                                           data-toggle="tooltip" title="Download"></i>
+                                    </a>
+                                    {{- if $.AllowDelete }}
+                                        <button class="btn p-0 ms-2" onclick="remove({{ $item.URL.String }})">
+                                            <i class="bi bi-trash3-fill" style="color:#cf0a0a;" data-toggle="tooltip"
+                                               title="Delete"></i>
+                                        </button>
+                                    {{- end }}
+                                </td>
+                            {{ end }}
+                        </tr>
+                    {{- end }}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {{ end }}
+</div>
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function (event) {
+        generateNavBar();
+    });
+
+    function generateNavBar() {
+        const title = {{ .Title }}  //noinspection
+        const nav_items = title.split("/")
+        const nav = document.getElementById("nav")
+
+        if (nav_items.length > 1) {
+            let url_path = "/"
+            nav_items.forEach((v, i) => {
+                url_path += v + "/"
+                let item = `<a class="nav-link fs-4 pe-1 ps-1" href="${url_path}">${v}</a>`
+                item += `<span class="nav-link fs-6 disabled" style="padding: 1rem 0.5rem 0;">></span>`
+                if (i === nav_items.length - 1)
+                    item = `<a class="nav-link disabled fs-4 pe-1 ps-1" href="#" tabindex="-1" aria-disabled="true">${v}</a>`
+                nav.innerHTML += item
+            })
+        } else
+            nav.innerHTML = `<a class="nav-link disabled fs-4" href="#" tabindex="-1" aria-disabled="true">${nav_items[0]}</a>`
+    }
+
+    if(document.getElementById("newfolder") !== null)
+        document.getElementById("newfolder").onkeyup = (e) => {
+            if (e.key === "Enter") {
+                create()
+            }
+        }
+    document.getElementById("tinput").onkeyup = tFilter;
+    document.getElementById("ninput").onkeyup = tFilter;
+    document.getElementById("tinput").ondblclick = (el) => {
+        el.target.value = "";
+        tFilter()
+    };
+    document.getElementById("ninput").ondblclick = (el) => {
+        el.target.value = "";
+        tFilter()
+    };
+
+    function tFilter() {
+        const type_f = document.getElementById("tinput").value.toUpperCase()
+        const name_f = document.getElementById("ninput").value.toUpperCase()
+
+        document.querySelectorAll('#fm tbody tr:not(.header)').forEach((tr) => {
+            let name_td = tr.children[1]
+            let type_td = tr.children[3]
+            if (name_td === undefined || type_td === undefined)
+                return
+
+            if (name_td.children[0])
+                name_td = name_td.children[0].innerHTML.toUpperCase()
+            else
+                name_td = name_td.textContent.split("\n")[0].toUpperCase()
+
+            if (type_td.children[0])
+                type_td = type_td.children[0].innerHTML.toUpperCase()
+            else
+                type_td = type_td.textContent.split("\n")[0].toUpperCase()
+
+            if (name_td.startsWith(name_f) && type_td.startsWith(type_f)) tr.style.removeProperty('display');
+            else tr.style.display = 'none';
+        });
+    }
+
+    document.querySelectorAll("thead th i:not(.up_icon)").forEach((el, index) => {
+        el.onclick = (i) => {
+            sortTable(index)
+            // <i class="bi bi-sort-up"></i> sort up
+            if (i.target.className.indexOf("bi-filter") !== -1) {
+                i.target.classList.remove("bi-filter")
+                i.target.classList.add("bi-sort-down-alt")
+            } else {
+                i.target.classList.toggle('bi-sort-down')
+                i.target.classList.toggle('bi-sort-down-alt');
+            }
+            document.querySelectorAll("thead th i:not(.up_icon)").forEach((el2, index2) => {
+                if (index2 !== index) {
+                    el2.classList.add("bi-filter")
+                    el2.classList.remove('bi-sort-down')
+                    el2.classList.remove('bi-sort-down-alt');
+                }
+            })
+        }
+    })
+
+    function sortTable(n) {
+        let table, rows, switching, i, x, y, shouldSwitch, dir, switch_count = 0;
+        table = document.getElementById("fm");
+        switching = true;
+        dir = "asc";
+
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                if (dir === "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir === "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switch_count++;
+            } else {
+                if (switch_count === 0 && dir === "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+    }
+
+    function remove(url) {
+        send(url, {
+            method: 'DELETE'
+        })
+    }
+
+    function create() {
+        const name = document.getElementById("newfolder").value
+        if (name.length === 0)
+            return
+
+        send(window.location.href, {
+            method: 'PUT',
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: "name=" + name
+        })
+    }
+
+    function send(url, options) {
+        fetch(url, options).then((response) => {
+            if (!response.ok) {
+                alert(`HTTP error: ${response.statusText}! Status: ${response.status}`);
+            } else {
+                alert("Success")
+                window.location.reload();
+            }
+        }).catch(err => {
+            alert(err)
+        });
+    }
+</script>
+</body>
+</html>
