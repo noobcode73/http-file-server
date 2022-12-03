@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/muller2002/http-file-server/server"
 	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -22,7 +22,6 @@ const (
 	defaultAddr              = ":8080"
 	portEnvVarName           = "PORT"
 	quietEnvVarName          = "QUIET"
-	rootRoute                = "/"
 	customTemplateEnvVarName = "TEMPLATES"
 	sslCertificateEnvVarName = "SSL_CERTIFICATE"
 	sslKeyEnvVarName         = "SSL_KEY"
@@ -40,7 +39,7 @@ var (
 	portFlag64, _      = strconv.ParseInt(os.Getenv(portEnvVarName), 10, 64)
 	portFlag           = int(portFlag64)
 	quietFlag          = os.Getenv(quietEnvVarName) == "true"
-	routesFlag         routes
+	routesFlag         server.Routes
 	sslCertificate     = os.Getenv(sslCertificateEnvVarName)
 	sslKey             = os.Getenv(sslKeyEnvVarName)
 	userFlag           = os.Getenv(userEnvVarName)
@@ -67,7 +66,7 @@ func init() {
 	flag.BoolVar(&allowCreatesFlag, "c", allowCreatesFlag, "(alias for -creates)")
 	flag.BoolVar(&noAllowHiddenFlag, "nohidden", allowCreatesFlag, fmt.Sprintf("no allow hidden folders or files (environment variable %q)", noAllowHiddenEnvVarName))
 	flag.BoolVar(&noAllowHiddenFlag, "nh", allowCreatesFlag, "(alias for -nohidden)")
-	flag.Var(&routesFlag, "route", routesFlag.help())
+	flag.Var(&routesFlag, "route", routesFlag.Help())
 	flag.Var(&routesFlag, "r", "(alias for -route)")
 	flag.StringVar(&sslCertificate, "ssl-cert", sslCertificate, fmt.Sprintf("path to SSL server certificate (environment variable %q)", sslCertificateEnvVarName))
 	flag.StringVar(&sslKey, "ssl-key", sslKey, fmt.Sprintf("path to SSL private key (environment variable %q)", sslKeyEnvVarName))
@@ -86,79 +85,6 @@ func init() {
 			log.Fatalf("%q: %v", arg, err)
 		}
 	}
-}
-
-func main() {
-	addr, err := addr()
-	if err != nil {
-		log.Fatalf("address/port: %v", err)
-	}
-	err = server(addr, routesFlag)
-	if err != nil {
-		log.Fatalf("start server: %v", err)
-	}
-}
-
-func server(addr string, routes routes) error {
-	// check exist folder templates
-	if stat, err := os.Stat(customTemplateFlag); os.IsNotExist(err) || stat.IsDir() == false {
-		log.Printf("Wrong path to folder with custom templates: %s\n", customTemplateFlag)
-		customTemplateFlag = ""
-	} else {
-		if string(customTemplateFlag[len(customTemplateFlag)-1]) == osPathSeparator {
-			customTemplateFlag = strings.TrimSuffix(customTemplateFlag, osPathSeparator)
-		}
-		log.Printf("Added custom templates: %s", customTemplateFlag)
-	}
-
-	mux := http.DefaultServeMux
-	handlers := make(map[string]http.Handler)
-
-	if len(routes.Values) == 0 {
-		_ = routes.Set(".")
-	}
-
-	for _, route := range routes.Values {
-		handlers[route.Route] = &fileHandler{
-			route:          route.Route,
-			path:           route.Path,
-			allowUpload:    allowUploadsFlag,
-			allowDelete:    allowDeletesFlag,
-			allowCreate:    allowCreatesFlag,
-			customTemplate: customTemplateFlag,
-			noAllowHidden:  noAllowHiddenFlag,
-		}
-
-		if userFlag == "" && passwdFlag == "" && route.User == "" && route.Passwd == "" {
-			mux.Handle(route.Route, handlers[route.Route])
-			log.Printf("serving local path %q on %q", route.Path, route.Route)
-		} else {
-			_user, _passwd := userFlag, passwdFlag
-			if route.User != "" && route.Passwd != "" {
-				_user, _passwd = route.User, route.Passwd
-			}
-			mux.HandleFunc(route.Route, BasicAuth(handlers[route.Route].ServeHTTP, _user, _passwd, "Please enter your username and password for this site"))
-			log.Printf("auth with serving local path %q on %q", route.Path, route.Route)
-		}
-	}
-
-	_, rootRouteTaken := handlers[rootRoute]
-	if !rootRouteTaken {
-		route := routes.Values[0].Route
-		mux.Handle(rootRoute, http.RedirectHandler(route, http.StatusTemporaryRedirect))
-		log.Printf("redirecting to %q from %q", route, rootRoute)
-	}
-
-	binaryPath, _ := os.Executable()
-	if binaryPath == "" {
-		binaryPath = "server"
-	}
-	if sslCertificate != "" && sslKey != "" {
-		log.Printf("%s (HTTPS) listening on %q", filepath.Base(binaryPath), addr)
-		return http.ListenAndServeTLS(addr, sslCertificate, sslKey, mux)
-	}
-	log.Printf("%s listening on %q", filepath.Base(binaryPath), addr)
-	return http.ListenAndServe(addr, mux)
 }
 
 func addr() (string, error) {
@@ -184,5 +110,54 @@ func addr() (string, error) {
 		fallthrough
 	default:
 		return defaultAddr, nil
+	}
+}
+
+func checkCustomTemplate() {
+	// check exist folder templates
+	osPathSeparator := string(filepath.Separator)
+
+	if customTemplateFlag != "" {
+		if stat, err := os.Stat(customTemplateFlag); os.IsNotExist(err) || stat.IsDir() == false {
+			log.Printf("Wrong path to folder with custom templates: %s\n", customTemplateFlag)
+			customTemplateFlag = ""
+		} else {
+			if string(customTemplateFlag[len(customTemplateFlag)-1]) == osPathSeparator {
+				customTemplateFlag = strings.TrimSuffix(customTemplateFlag, osPathSeparator)
+			}
+			log.Printf("Added custom templates: %s", customTemplateFlag)
+		}
+	}
+}
+
+func newConfig() server.Config {
+	checkCustomTemplate()
+
+	cfg := server.NewConfig()
+	cfg.AllowCreatesFlag = allowCreatesFlag
+	cfg.AllowDeletesFlag = allowDeletesFlag
+	cfg.AllowCreatesFlag = allowCreatesFlag
+	cfg.AllowUploadsFlag = allowUploadsFlag
+	cfg.CustomTemplateFlag = customTemplateFlag
+	cfg.NoAllowHiddenFlag = noAllowHiddenFlag
+	cfg.PasswdFlag = passwdFlag
+	cfg.RootRoute = "/"
+	cfg.SslCertificate = sslCertificate
+	cfg.SslKey = sslKey
+	cfg.UserFlag = userFlag
+
+	return cfg
+}
+
+func main() {
+	addr, err := addr()
+	if err != nil {
+		log.Fatalf("address/port: %v", err)
+	}
+
+	cfg := newConfig()
+	err = server.Run(addr, cfg)
+	if err != nil {
+		log.Fatalf("start server: %v", err)
 	}
 }

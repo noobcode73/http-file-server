@@ -1,10 +1,12 @@
-package main
+package server
 
 import (
 	"crypto/subtle"
 	"net/http"
 	"os"
 )
+
+const realm = "Please enter your username and password for this site"
 
 var template401 = []byte(`
 <!DOCTYPE html>
@@ -30,14 +32,14 @@ var template401 = []byte(`
 </body>
 </html>`)
 
-func BasicAuth(handler http.HandlerFunc, username, password, realm string) http.HandlerFunc {
+func BasicAuth(handler http.HandlerFunc, username, password, customTemplate string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
 		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 			w.WriteHeader(401)
-			if customTemplateFlag != "" {
-				p := customTemplateFlag + osPathSeparator + "errors" + osPathSeparator + "401.html"
+			if customTemplate != "" {
+				p := customTemplate + osPathSeparator + "errors" + osPathSeparator + "401.html"
 				template401, _ = os.ReadFile(p)
 			}
 			w.Write(template401)
