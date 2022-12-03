@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type routes struct {
+type Routes struct {
 	Separator string
 
 	Values []struct {
@@ -18,7 +18,7 @@ type routes struct {
 	Texts []string
 }
 
-func (fv *routes) help() string {
+func (fv *Routes) Help() string {
 	separator := "="
 	if fv.Separator != "" {
 		separator = fv.Separator
@@ -55,7 +55,7 @@ func getAuth(v string) (s, u, p string) {
 }
 
 // Set is flag.Value.Set
-func (fv *routes) Set(v string) error {
+func (fv *Routes) Set(v string) error {
 	separator := "="
 	if fv.Separator != "" {
 		separator = fv.Separator
@@ -101,6 +101,6 @@ func (fv *routes) Set(v string) error {
 	return nil
 }
 
-func (fv *routes) String() string {
+func (fv *Routes) String() string {
 	return strings.Join(fv.Texts, ", ")
 }
