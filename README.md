@@ -131,7 +131,7 @@ You can set Basic authorization for a single route using the format `user:passwd
 $ ./http-file-server admin:1234@/home=/tmp/home
 ```
 
-Nore: The `--user` and `--passwd` arguments will be ignored.
+Note: The `--user` and `--passwd` arguments will be ignored.
 
 For example:
 ```sh

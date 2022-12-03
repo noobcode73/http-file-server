@@ -101,14 +101,16 @@ func main() {
 
 func server(addr string, routes routes) error {
 	// check exist folder templates
-	if stat, err := os.Stat(customTemplateFlag); os.IsNotExist(err) || stat.IsDir() == false {
-		log.Printf("Wrong path to folder with custom templates: %s\n", customTemplateFlag)
-		customTemplateFlag = ""
-	} else {
-		if string(customTemplateFlag[len(customTemplateFlag)-1]) == osPathSeparator {
-			customTemplateFlag = strings.TrimSuffix(customTemplateFlag, osPathSeparator)
+	if customTemplateFlag != "" {
+		if stat, err := os.Stat(customTemplateFlag); os.IsNotExist(err) || stat.IsDir() == false {
+			log.Printf("Wrong path to folder with custom templates: %s\n", customTemplateFlag)
+			customTemplateFlag = ""
+		} else {
+			if string(customTemplateFlag[len(customTemplateFlag)-1]) == osPathSeparator {
+				customTemplateFlag = strings.TrimSuffix(customTemplateFlag, osPathSeparator)
+			}
+			log.Printf("Added custom templates: %s", customTemplateFlag)
 		}
-		log.Printf("Added custom templates: %s", customTemplateFlag)
 	}
 
 	mux := http.DefaultServeMux
