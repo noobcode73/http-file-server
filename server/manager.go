@@ -49,24 +49,24 @@ func (f *FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_ = f.serveStatus(w, r, http.StatusForbidden)
 	case !f.allowUpload && r.Method == http.MethodPost:
 		_ = f.serveStatus(w, r, http.StatusForbidden)
-	case !f.allowCreate && r.Method == http.MethodPut:
+	case !f.allowCreate && r.Method == http.MethodPost:
 		_ = f.serveStatus(w, r, http.StatusForbidden)
-	case r.URL.Query().Get(zipKey) != "":
+	case r.URL.Query().Has(zipKey):
 		err := f.serveZip(w, r, osPath)
 		if err != nil {
 			_ = f.serveStatus(w, r, http.StatusInternalServerError)
 		}
-	case r.URL.Query().Get(tarGzKey) != "":
+	case r.URL.Query().Has(tarGzKey):
 		err := f.serveTarGz(w, r, osPath)
 		if err != nil {
 			_ = f.serveStatus(w, r, http.StatusInternalServerError)
 		}
-	case f.allowUpload && info.IsDir() && r.Method == http.MethodPost && r.URL.Query().Has("new") == false:
+	case f.allowUpload && info.IsDir() && r.Method == http.MethodPost && r.URL.Query().Has(newFolderKey) == false:
 		err := f.serveUploadTo(w, r, osPath)
 		if err != nil {
 			_ = f.serveStatus(w, r, http.StatusInternalServerError)
 		}
-	case f.allowCreate && info.IsDir() && r.Method == http.MethodPost && r.URL.Query().Has("new"):
+	case f.allowCreate && info.IsDir() && r.Method == http.MethodPost && r.URL.Query().Has(newFolderKey):
 		err := f.createNewFolder(w, r, osPath)
 		if err != nil {
 			log.Println("error create folder:", err)

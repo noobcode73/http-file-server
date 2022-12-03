@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	newFolderKey     = "new"
 	tarGzKey         = "tar.gz"
 	tarGzValue       = "true"
 	tarGzContentType = "application/x-tar+gzip"
