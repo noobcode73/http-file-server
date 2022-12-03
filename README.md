@@ -148,14 +148,14 @@ You can download selected files or directory in `zip` or `tar.gz` archive
 - The `POST` HTML method is used with a `zip` or `tar.gz` URL request argument
 - Payload `items` value `folder or directory name` separated by `;`
 
-
+```
     Url: /home/?zip
     Payload: items=main.go;help;text1.txt;folder01
     Method: Post
     Headers: "Content-Type": "application/x-www-form-urlencoded"
+```
 
-
-![screenshot](doc/download selected.jpg)
+![screenshot](doc/download%20selected.jpg)
 
 
 
