@@ -105,7 +105,7 @@ $ ./http-file-server -t ./templates
 Set `-c` or `--creates`
 The new directory will be created in the current directory with permissions `665`
 
-Note: html method `PUT` is used
+Note: The `POST` HTML method is used with the URL request argument `new`
 
 ```sh
 $ ./http-file-server -c ./

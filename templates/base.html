@@ -361,8 +361,8 @@
         if (name.length === 0)
             return
 
-        send(window.location.href, {
-            method: 'PUT',
+        send(window.location.href + "?new", {
+            method: 'POST',
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
             body: "name=" + name
         })

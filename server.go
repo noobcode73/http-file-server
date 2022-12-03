@@ -87,8 +87,8 @@ const directoryListingTemplateText = `
         if (name.length === 0)
             return
 
-        send(window.location.href, {
-            method: 'PUT',
+        send(window.location.href + "?new", {
+            method: 'POST',
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
             body: "name=" + name
         })
@@ -398,12 +398,12 @@ func (f *fileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			_ = f.serveStatus(w, r, http.StatusInternalServerError)
 		}
-	case f.allowUpload && info.IsDir() && r.Method == http.MethodPost:
+	case f.allowUpload && info.IsDir() && r.Method == http.MethodPost && r.URL.Query().Has("new") == false:
 		err := f.serveUploadTo(w, r, osPath)
 		if err != nil {
 			_ = f.serveStatus(w, r, http.StatusInternalServerError)
 		}
-	case f.allowCreate && info.IsDir() && r.Method == http.MethodPut:
+	case f.allowCreate && info.IsDir() && r.Method == http.MethodPost && r.URL.Query().Has("new"):
 		err := f.createNewFolder(w, r, osPath)
 		if err != nil {
 			log.Println("error create folder:", err)
